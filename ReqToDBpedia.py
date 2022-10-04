@@ -11,7 +11,7 @@ ORDER BY ?categories
 LIMIT 1000
 """
 
-with open("query_result.txt", "a") as f:
+with open("outputs/query_result.txt", "a") as f:
     for i in tqdm.tqdm(range(40)):
         if (i > 0):
             query = tmp_query + "OFFSET " + str(i) + "000"

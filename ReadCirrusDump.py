@@ -5,7 +5,7 @@ import tqdm
 file_path = '../Dataset/enwiki-20201123-cirrussearch-content.json.gz'
 counter = 0
 with gzip.open(file_path) as file:
-    with open("output_file.json", "w") as output_file:
+    with open("outputs/dumps.json", "w") as output_file:
         output_file.write("[\n")
 
         for line in tqdm.tqdm(file):
