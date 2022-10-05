@@ -39,13 +39,13 @@ class PreProcessedCirrusDump:
             # 元のカテゴリを、前置詞（‘in’, ‘from’, ‘for’, ‘of’, ‘by’, ‘for’, ‘involving'）で2つに分割する「car of united states for employee」
             # ここで、前置詞の除去も行われる
             splitted_by_prep = re.split(PATTERN, category)
-            trimed = list(map(lambda c: c.strip(), splitted_by_prep))
             # 分割した後の左側を単語単位に分割する
-            trimed[0] = trimed[0].split()
+            splitted_first_category = splitted_by_prep[0].split()
+            for w in splitted_first_category:
+                new_categories.append(w)
 
-            map(lambda w: new_categories.append(w), trimed[0])
-            for i in range(1, len(trimed)):
-                new_categories.append(trimed[i])
+            for i in range(1, len(splitted_by_prep)):
+                new_categories.append(splitted_by_prep[i])
         return new_categories
 
 def main():
