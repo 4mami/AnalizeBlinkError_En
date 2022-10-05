@@ -64,24 +64,24 @@ def main():
             line = line.lower() # 「archdeacons of raphoe」
             ht_categories.append(line)
 
-    counter = 0
+    counter = 1
     with gzip.open(CIRRUSSEARCH_FILE_PATH) as file:
         with open(OUTPUT_FILE_PATH, "w") as output_file:
             # cirrus dumpから1行読み込んで、必要なものだけをクラスに入れ、1つのインスタンスを作る
             for line in tqdm.tqdm(file):
                 data: dict = json.loads(line)
                 if "index" not in data:
-                    counter += 1
-                    if ("debugpy" in sys.modules and counter > 1000):
+                    if ("debugpy" in sys.modules and counter > 2000):
                         break
                     try:
                         preprocessed_data = PreProcessedCirrusDump(ht_categories, data["title"], data["heading"], data["category"], data.get("ores_articletopics"), data.get("ores_articletopic"))
                     except Exception as e:
-                        logger.error("{0}, {1}".format(type(e), e))
+                        logger.error("{0}th line:{1}, {2}".format(counter, type(e), e))
                     else:
                         # そのインスタンスをシリアライズして、ファイルに書き込む
                         json_str = json.dumps(vars(preprocessed_data))
                         output_file.write(json_str + "\n")
+                counter += 1
 
 if __name__ == '__main__':
     main()
