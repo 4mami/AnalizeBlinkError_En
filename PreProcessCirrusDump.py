@@ -46,7 +46,7 @@ class PreProcessedCirrusDump:
 
             for i in range(1, len(splitted_by_prep)):
                 new_categories.append(splitted_by_prep[i])
-        return new_categories
+        return list(set(new_categories))
 
 def main():
     with open('configs/log_config.json', 'r') as f:
