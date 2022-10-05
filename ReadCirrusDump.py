@@ -14,7 +14,7 @@ with gzip.open(file_path) as file:
             if "index" not in data:
                 json_str = json.dumps(data, indent=2)
                 output_file.write(json_str + ",\n\n\n")
-            if (counter > 10000):
+            if (counter > 1000):
                 break
 
         output_file.write("]")
