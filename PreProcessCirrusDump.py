@@ -59,6 +59,7 @@ def main():
     with open(HT_FILE_PATH) as ht_file:
         for line in ht_file:
             line = line.replace('http://dbpedia.org/resource/Category:', "") # 「Archdeacons_of_Raphoe」
+            line = line.rstrip()
             line = line.replace("_", " ") # 「Archdeacons of Raphoe」
             line = line.lower() # 「archdeacons of raphoe」
             ht_categories.append(line)
