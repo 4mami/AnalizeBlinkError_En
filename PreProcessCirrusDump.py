@@ -9,7 +9,7 @@ from logging import getLogger, config
 CIRRUSSEARCH_FILE_PATH = "../Dataset/enwiki-20201123-cirrussearch-content.json.gz"
 HT_FILE_PATH = "outputs/query_result.txt"
 OUTPUT_FILE_PATH = "outputs/preprocessed_dumps.json"
-PATTERN = r'in|from|for|of|by|for|involving'
+PATTERN = r' in | from | for | of | by | for | involving '
 
 class PreProcessedCirrusDump:
     title = ""
