@@ -82,6 +82,7 @@ def main():
                         json_str = json.dumps(vars(preprocessed_data))
                         output_file.write(json_str + "\n")
                 counter += 1
+    logger.info("finished!!!")
 
 if __name__ == '__main__':
     main()
