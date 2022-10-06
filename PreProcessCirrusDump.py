@@ -9,7 +9,6 @@ from logging import getLogger, config
 CIRRUSSEARCH_FILE_PATH = "../Dataset/enwiki-20201123-cirrussearch-content.json.gz"
 HT_FILE_PATH = "outputs/query_result.txt"
 OUTPUT_FILE_PATH = "outputs/preprocessed_dumps.json"
-PATTERN = r' in | from | for | of | by | for | involving '
 
 class PreProcessedCirrusDump:
     title = ""
@@ -31,22 +30,22 @@ class PreProcessedCirrusDump:
         lowered_categories = list(map(lambda c: c.lower(), category))
         categories_without_ht = [c for c in lowered_categories if c not in ht_categories]
 
-        self.roughen_category = self.RoughenCategory(categories_without_ht)
+        self.roughen_category = RoughenCategory(categories_without_ht)
 
-    def RoughenCategory(self, old_categories: list): # 元のカテゴリ配列の要素を書き換えても特に問題はないので、普通に参照渡しで
-        new_categories = []
-        for category in old_categories:
-            # 元のカテゴリを、前置詞（‘in’, ‘from’, ‘for’, ‘of’, ‘by’, ‘for’, ‘involving'）で2つに分割する「car of united states for employee」
-            # ここで、前置詞の除去も行われる
-            splitted_by_prep = re.split(PATTERN, category)
-            # 分割した後の左側を単語単位に分割する
-            splitted_first_category = splitted_by_prep[0].split()
-            for w in splitted_first_category:
-                new_categories.append(w)
+def RoughenCategory(old_categories: list): # 元のカテゴリ配列の要素を書き換えても特に問題はないので、普通に参照渡しで
+    new_categories = []
+    for category in old_categories:
+        # 元のカテゴリを、前置詞（‘in’, ‘from’, ‘for’, ‘of’, ‘by’, ‘for’, ‘involving'）で2つに分割する「car of united states for employee」
+        # ここで、前置詞の除去も行われる
+        splitted_by_prep = re.split(r' in | from | for | of | by | for | involving ', category)
+        # 分割した後の左側を単語単位に分割する
+        splitted_first_category = splitted_by_prep[0].split()
+        for w in splitted_first_category:
+            new_categories.append(w)
 
-            for i in range(1, len(splitted_by_prep)):
-                new_categories.append(splitted_by_prep[i])
-        return list(set(new_categories))
+        for i in range(1, len(splitted_by_prep)):
+            new_categories.append(splitted_by_prep[i])
+    return list(set(new_categories))
 
 def main():
     with open('configs/log_config.json', 'r') as f:
