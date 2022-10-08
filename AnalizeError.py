@@ -8,9 +8,10 @@ from PreProcessCirrusDump import RoughenCategory
 TEST_DATA_PATH = "../Dataset/unseen_mentions/test.json"
 CIRRUSSEARCH_FILE_PATH = "outputs/preprocessed_dumps.json"
 OUTPUT_FILE_PATH = "outputs/analizeError_result.txt"
+LOW_RECALL_THRESHOLD = 80
 
 models_path = "../BLINK/models/"
-onfig = {
+blink_config = {
     "test_entities": None,
     "test_mentions": None,
     "interactive": False,
@@ -31,7 +32,7 @@ def main():
     config.dictConfig(log_conf)
     logger = getLogger(__name__)
 
-    logger.info("-------------------------------------------------")
+    logger.info("--------------------------------------------------------------------------------------------------")
     logger.info("Start!")
     logger.info("事前処理済みcirrus dumpの読み込み")
     preprocessed_cirrus_dumps = []
@@ -40,7 +41,7 @@ def main():
             preprocessed_cirrus_dump: dict = json.loads(line)
             preprocessed_cirrus_dumps.append(preprocessed_cirrus_dump)
 
-    args = argparse.Namespace(**config)
+    args = argparse.Namespace(**blink_config)
     logger.info("BLINKモデル読み込み開始")
     models = main_dense.load_models(args, logger=None)
     logger.info("BLINKモデル読み込み終了")
@@ -53,12 +54,12 @@ def main():
             sum_match = 0
             sum_recall = 0.0
             for line in tqdm.tqdm(test_data_file):
-                output_file.write(f"----------id:{id:06}---------\n")
+                output_file.write(f"----------id:{id:06}---------------------------------------------------------------------------------------------\n")
                 test_data: dict = json.loads(line)
                 output_file.write(f"[test.json] docId:{test_data['docId']}\n")
                 output_file.write(f"[test.json] wikiurl:{test_data['wikiurl']}\n")
                 output_file.write(f"[test.json] wikiId:{test_data['wikiId']}\n")
-                output_file.write(f"[test.json] word:{test_data['word']}\n")
+                output_file.write(f"[test.json] y_title:{test_data['y_title']}\n")
                 # 1行で書き込むとプログラムで読み込みやすいから、配列もそのままで
                 output_file.write(f"[test.json] original_category:{test_data['y_category_original']}\n")
 
@@ -80,40 +81,46 @@ def main():
 
                 predicted_category = []
                 # ダンプデータを使って、上の出力から、そのカテゴリを取得する
-                for i in range(len(predictions)):
+                for i in range(len(predictions[0])):
                     # 事前処理済みcirrus dumpリスト（len=100万ぐらい）において、BLINKが出力したtitleを持っている要素1つを抽出
-                    founded_dump = [d for d in preprocessed_cirrus_dumps if ("title", predictions[i]) in d.items()]
+                    founded_dump = [d for d in preprocessed_cirrus_dumps if ("title", predictions[0][i]) in d.items()]
                     if founded_dump: # dump内にtitleを持つwikipedia記事があった場合
                         predicted_category.append(founded_dump[0]["roughen_category"])
                     else:
                         predicted_category.append([])
 
-                    output_file.write(f"[BLINK's {i+1}th output] title:{predictions[i]}\n")
-                    output_file.write(f"[BLINK's {i+1}th output] score:{scores[i]}\n")
+                    output_file.write(f"[BLINK's {i+1}th output] ------------------------------------------------------------------------------------\n")
+                    output_file.write(f"[BLINK's {i+1}th output] title              :{predictions[0][i]}\n")
+                    output_file.write(f"[BLINK's {i+1}th output] score              :{scores[0][i]}\n")
                     if (predicted_category[i]):
-                        output_file.write(f"[BLINK's {i+1}th output] roughen_category:{sorted(predicted_category[i])}\n")
+                        output_file.write(f"[BLINK's {i+1}th output] roughen_category   :{sorted(predicted_category[i])}\n")
                     else:
-                        logger.warning(f"id:{id}  BLINKが出力した{i+1}番目のエンティティ「{predictions[i]}」が、cirrus dumpの中に含まれていません")
-                        output_file.write(f"[BLINK's {i+1}th output] roughen_category:BLINK'S OUTPUT DOSEN'T APPEAR IN CIRRSU DUMPS!\n")
+                        logger.warning(f"id:{id}  BLINKが出力した{i+1}番目のエンティティ「{predictions[0][i]}」が、cirrus dumpの中に含まれていません")
+                        output_file.write(f"[BLINK's {i+1}th output] roughen_category   :BLINK'S OUTPUT DOSEN'T APPEAR IN CIRRSU DUMPS!\n")
 
                     # gold カテゴリと比較した結果を出す（具体的には、（粗くした）goldカテゴリの何割を、cirrus dumpから持ってきたカテゴリがカバーしてるかとか）
-                    if (predictions[i] == test_data['word']):
-                        sum_match += 1
+                    if (predictions[0][i] == test_data['y_title']):
+                        # 順位の逆数分だけ、予測と実際の合致スコアを与える
+                        sum_match += 1 / (i+1)
                         output_file.write(f"[BLINK's {i+1}th output] matches gold(test)?:[*YES*]\n")
                     else:
                         output_file.write(f"[BLINK's {i+1}th output] matches gold(test)?:[*NO *]\n")
                     if (predicted_category[i]):
                         tmp_recall = len(set(predicted_category[i]) & set(test_data['roughen_category'])) / len(test_data['roughen_category']) * 100
-                        output_file.write(f"[BLINK's {i+1}th output] recall(prediction & gold/gold(test) size):{tmp_recall:.3f}%\n")
+                        output_file.write(f"[BLINK's {i+1}th output] recall(prediction & gold/gold(test) size):{tmp_recall:.3f}%")
+                        output_file.write(f"{'[LOW_RECALL]' if tmp_recall < LOW_RECALL_THRESHOLD else ''}\n")
                         sum_recall += tmp_recall
                     else:
                         sum_no_match_in_cirrsu_dumps += 1
                         output_file.write(f"[BLINK's {i+1}th output] recall(prediction & gold/gold(test) size):BLINK'S OUTPUT DOSEN'T APPEAR IN CIRRSU DUMPS!\n")
-                output_file.write("----------------------------\n")
+                output_file.write("----------------------------------------------------------------------------------------------------------------\n")
                 id += 1
 
         logger.info("全体の結果を出力")
-        output_file.write("----------total result------\n")
-        output_file.write(f"[total result] BLINK's output matches gold(test):{sum_match / (id+1) * 100:.3f}%\n")
-        output_file.write(f"[total result] recall(prediction & gold/gold(test) size):{sum_recall / (id+1-sum_no_match_in_cirrsu_dumps):.3f}%\n")
+        output_file.write("----------total result------------------------------------------------------------------------------------------\n")
+        output_file.write(f"[total result] BLINK's output matches gold(test):{sum_match / id * 100:.3f}%\n")
+        output_file.write(f"[total result] recall(prediction & gold/gold(test) size):{sum_recall / (id*3 - sum_no_match_in_cirrsu_dumps):.3f}%\n")
     logger.info("Finished!")
+
+if __name__ == '__main__':
+    main()
