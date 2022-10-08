@@ -95,7 +95,7 @@ def main():
                     if (predicted_category[i]):
                         output_file.write(f"[BLINK's {i+1}th output] roughen_category   :{sorted(predicted_category[i])}\n")
                     else:
-                        logger.warning(f"id:{id}  BLINKが出力した{i+1}番目のエンティティ「{predictions[0][i]}」が、cirrus dumpの中に含まれていません")
+                        logger.warning(f"id:{id}  BLINKが出力した{i+1}位のエンティティ「{predictions[0][i]}」が、cirrus dumpの中に含まれていません")
                         output_file.write(f"[BLINK's {i+1}th output] roughen_category   :BLINK'S OUTPUT DOSEN'T APPEAR IN CIRRSU DUMPS!\n")
 
                     # gold カテゴリと比較した結果を出す（具体的には、（粗くした）goldカテゴリの何割を、cirrus dumpから持ってきたカテゴリがカバーしてるかとか）
@@ -106,10 +106,16 @@ def main():
                     else:
                         output_file.write(f"[BLINK's {i+1}th output] matches gold(test)?:[*NO *]\n")
                     if (predicted_category[i]):
-                        tmp_recall = len(set(predicted_category[i]) & set(test_data['roughen_category'])) / len(test_data['roughen_category']) * 100
-                        output_file.write(f"[BLINK's {i+1}th output] recall(prediction & gold/gold(test) size):{tmp_recall:.3f}%")
-                        output_file.write(f"{'[LOW_RECALL]' if tmp_recall < LOW_RECALL_THRESHOLD else ''}\n")
-                        sum_recall += tmp_recall
+                        try:
+                            tmp_recall = len(set(predicted_category[i]) & set(test_data['roughen_category'])) / len(test_data['roughen_category']) * 100
+                        except Exception as e:
+                            logger.error(f"id:{id}  BLINKが出力した{i+1}位のエンティティ「{predictions[0][i]}」 / goldエンティティ「{test_data['y_title']}」 / 例外{type(e)}:{e}")
+                            sum_no_match_in_cirrsu_dumps += 1
+                            output_file.write(f"[BLINK's {i+1}th output] recall(prediction & gold/gold(test) size):EXCEPTION({type(e)}) OCCURED!:{e}\n")
+                        else:
+                            output_file.write(f"[BLINK's {i+1}th output] recall(prediction & gold/gold(test) size):{tmp_recall:.3f}%")
+                            output_file.write(f"{'[LOW_RECALL]' if tmp_recall < LOW_RECALL_THRESHOLD else ''}\n")
+                            sum_recall += tmp_recall
                     else:
                         sum_no_match_in_cirrsu_dumps += 1
                         output_file.write(f"[BLINK's {i+1}th output] recall(prediction & gold/gold(test) size):BLINK'S OUTPUT DOSEN'T APPEAR IN CIRRSU DUMPS!\n")
