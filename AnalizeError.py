@@ -130,9 +130,10 @@ def main():
                         sum_no_match_per_instance += 1
                         sum_no_match_in_cirrsu_dumps += 1
                         output_file.write(f"[BLINK's {i+1}th output] recall(prediction & gold/gold(test) size):{BLINKS_OUTPUT_DOSENT_APPEAR_IN_CIRRSU_DUMPS}\n")
+                output_file.write("[BLINK's all outputs] ------------------------------------------------------------------------------------\n")
                 output_file.write(f"[BLINK's all outputs] match gold(test):{match_score * 100:.3f}%\n")
                 if (len(predictions[0]) == sum_no_match_per_instance):
-                    output_file.write(f"[BLINK's all outputs] mean recall:{BLINKS_ALL_OUTPUTS_DONT_APPEAR_IN_CIRRSU_DUMPS}")
+                    output_file.write(f"[BLINK's all outputs] mean recall:{BLINKS_ALL_OUTPUTS_DONT_APPEAR_IN_CIRRSU_DUMPS}\n")
                 else:
                     output_file.write(f"[BLINK's all outputs] mean recall:{sum_recall_per_instance / (len(predictions[0]) - sum_no_match_per_instance):.3f}%\n")
                 output_file.write("----------------------------------------------------------------------------------------------------------------\n")
