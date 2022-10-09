@@ -41,7 +41,7 @@ def RoughenCategory(old_categories: list): # 元のカテゴリ配列の要素�
         # 分割した後の左側を単語単位に分割する
         splitted_first_category = splitted_by_prep[0].split()
         for w in splitted_first_category:
-            new_categories.append(w)
+            new_categories.append(w.strip("()"))
 
         for i in range(1, len(splitted_by_prep)):
             new_categories.append(splitted_by_prep[i])
