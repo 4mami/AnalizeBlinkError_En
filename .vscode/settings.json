@@ -1,0 +1,13 @@
+{
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./tests",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true,
+    "python.defaultInterpreterPath": "~/.pyenv/versions/anaconda3-5.3.1/envs/blink37/bin/python",
+    "python.envFile": "${workspaceFolder}/.env"
+}
