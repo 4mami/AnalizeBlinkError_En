@@ -29,7 +29,7 @@ class Program:
     }
 
     def run(self):
-        logger = MyLogger.initialize("configs/log_config.json")
+        logger = MyLogger.initialize(__name__, "configs/log_config.json")
         logger.info("--------------------------------------------------------------------------------------------------")
         logger.info("Start!")
         logger.info("事前処理済みcirrus dumpの読み込み")
@@ -59,6 +59,7 @@ class Program:
                         "context_right": test_data["right_context_text"].lower(),
                     } ]
                 _, _, _, _, _, predictions, scores, = main_dense.run(args, None, *models, test_data=data_to_link)
+                scores_float = list(map(lambda s: float(s), scores[0]))
 
                 founded_dumps = []
                 # ダンプデータを使って、上の出力から、そのカテゴリを取得する
@@ -73,9 +74,9 @@ class Program:
                         logger.warning(f"id:{id}  BLINKが出力した{i+1}位のエンティティ「{predictions[0][i]}」が、dumpの中に含まれていません")
                         founded_dumps.append({})
 
-                output_dict = self.make_output_dict(id, test_data, list(zip(predictions, scores)), founded_dumps)
-                json_str = json.dumps(vars(output_dict))
-                with open(self.OUTPUT_FILE_PATH, "w") as output_file:
+                output_dict = self.make_output_dict(id, test_data, list(zip(predictions[0], scores_float)), founded_dumps)
+                json_str = json.dumps(output_dict)
+                with open(self.OUTPUT_FILE_PATH, "a") as output_file:
                     output_file.write(json_str)
                     output_file.write("\n")
                 id += 1
