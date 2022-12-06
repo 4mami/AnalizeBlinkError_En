@@ -131,6 +131,7 @@ class Program:
         test_data["left_context_text"] = tmp_context[0].strip()
         test_data["right_context_text"] = tmp_context[1].strip()
         test_data["y_title"] = url.split("/")[-1].replace("_", " ")
+        test_data["wikiurl"] = "https://en.wikipedia.org/wiki/" + url.split("/")[-1]
         test_data["dbpediaurl"] = url # ここを改造して、wikiurlを作る
         data_to_link = [ {"id": id, "label": "unknown", "label_id": -1, "context_left": test_data["left_context_text"].lower(), "mention": test_data["word"].lower(), "context_right": test_data["right_context_text"].lower()} ]
 
