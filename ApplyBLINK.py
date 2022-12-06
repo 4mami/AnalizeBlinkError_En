@@ -69,12 +69,12 @@ class Program:
                         logger.error(f"{self.TEST_DATA_KORE50}に不正な行: {line}")
                         continue
                     test_data, data_to_link = self.kore50_lines_to_blink_input(self.id, mention_list, sentence_list, url_list)
-                        _, _, _, _, _, predictions, scores, = main_dense.run(args, None, *models, test_data=data_to_link)
-                        scores_float = list(map(lambda s: float(s), scores[0]))
+                    _, _, _, _, _, predictions, scores, = main_dense.run(args, None, *models, test_data=data_to_link)
+                    scores_float = list(map(lambda s: float(s), scores[0]))
 
-                        output_dict = self.make_output_dict(self.id, test_data, list(zip(predictions[0], scores_float)))
-                        self.write_output(output_dict)
-                        self.id += 1
+                    output_dict = self.make_output_dict(self.id, test_data, list(zip(predictions[0], scores_float)))
+                    self.write_output(output_dict)
+                    self.id += 1
 
         logger.info(f"{self.TEST_DATA_YAHOO}読み込み開始 現在id:{self.id}")
         tree = ET.parse(self.DATASET_DIR + self.TEST_DATA_YAHOO)
