@@ -41,7 +41,7 @@ class Program:
         logger.info("BLINKモデル読み込み終了")
 
         logger.info(f"{self.TEST_DATA_UNSEEN_MENTIONS}を1行ずつ読み込む（1万行） 現在id:{self.id}")
-        with open(self.TEST_DATA_UNSEEN_MENTIONS) as test_data_file:
+        with open(self.DATASET_DIR + self.TEST_DATA_UNSEEN_MENTIONS) as test_data_file:
             for line in tqdm.tqdm(test_data_file):
                 test_data, data_to_link = self.unseen_mentions_line_to_blink_input(self.id, line)
                 _, _, _, _, _, predictions, scores, = main_dense.run(args, None, *models, test_data=data_to_link)
@@ -52,7 +52,7 @@ class Program:
                 self.id += 1
 
         logger.info(f"{self.TEST_DATA_KORE50}を1行ずつ読み込む（1560行） 現在id:{self.id}")
-        with open(self.TEST_DATA_KORE50, encoding="ISO-8859-1") as test_data_file:
+        with open(self.DATASET_DIR + self.TEST_DATA_KORE50, encoding="ISO-8859-1") as test_data_file:
             input_blink: bool = True
             sentence: str = ""
             mention: str = ""
