@@ -2,6 +2,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import xml.etree.ElementTree as ET
 import blink.main_dense as main_dense
 import tqdm
 from MyLogger import MyLogger
@@ -10,6 +11,7 @@ class Program:
     DATASET_DIR = "../Dataset/"
     TEST_DATA_UNSEEN_MENTIONS = "unseen_mentions/test.json"
     TEST_DATA_KORE50 = "kore50-lrec2020/kore50-nif-dbpedia.ttl"
+    TEST_DATA_YAHOO = "yahoo_webscope_L24/ydata-search-query-log-to-entities-v1_0.xml"
     OUTPUT_FILE_PATH = "outputs/ApplyBLINKWitoutType.json"
     BLINK_CONFIG_TOP_K = 5
 
@@ -87,6 +89,41 @@ class Program:
                         test_data["right_context_text"] = tmp_context[1].strip()
                         test_data["y_title"] = tmp_gold
                         test_data["dbpediaurl"] = url
+                        data_to_link = [ {"id": id, "label": "unknown", "label_id": -1, "context_left": test_data["left_context_text"].lower(), "mention": test_data["word"].lower(), "context_right": test_data["right_context_text"].lower()} ]
+                        _, _, _, _, _, predictions, scores, = main_dense.run(args, None, *models, test_data=data_to_link)
+                        scores_float = list(map(lambda s: float(s), scores[0]))
+
+                        output_dict = self.make_output_dict(self.id, test_data, list(zip(predictions[0], scores_float)))
+                        self.write_output(output_dict)
+                        self.id += 1
+
+        logger.info(f"{self.TEST_DATA_YAHOO}読み込み開始 現在id:{self.id}")
+        tree = ET.parse(self.DATASET_DIR + self.TEST_DATA_YAHOO)
+        root = tree.getroot()
+        for session in tqdm.tqdm(root):
+            for query in session:
+                tmp_attr = query.attrib
+                # 属性を見て、不適切なクエリならcontinue
+                if (tmp_attr["ambiguous"] == "true" or tmp_attr["cannot-judge"] == "true" or tmp_attr["navigational"] == "true" or tmp_attr["no-wp"] == "true" or tmp_attr["non-english"] == "true" or tmp_attr["quote-question"] == "true"):
+                    continue
+                sentence_yahoo = ""
+                for txt_and_anno in query:
+                    if (txt_and_anno.tag == "text"):
+                        sentence_yahoo = txt_and_anno.text
+                    elif (txt_and_anno.tag == "annotation"):
+                        tmp_mention = txt_and_anno[0].text
+                        tmp_context = sentence_yahoo.split(tmp_mention)
+                        if (len(tmp_context) != 2):
+                            logger.error(f"{self.TEST_DATA_YAHOO}に不正な行: {session.get('id')}, {tmp_mention}")
+                            continue
+                        tmp_wikiurl = txt_and_anno[1].text
+
+                        test_data = dict()
+                        test_data["word"] = tmp_mention
+                        test_data["left_context_text"] = tmp_context[0].strip()
+                        test_data["right_context_text"] = tmp_context[1].strip()
+                        test_data["y_title"] = tmp_wikiurl.split("/")[-1].replace("_", " ")
+                        test_data["wikiurl"] = tmp_wikiurl
                         data_to_link = [ {"id": id, "label": "unknown", "label_id": -1, "context_left": test_data["left_context_text"].lower(), "mention": test_data["word"].lower(), "context_right": test_data["right_context_text"].lower()} ]
                         _, _, _, _, _, predictions, scores, = main_dense.run(args, None, *models, test_data=data_to_link)
                         scores_float = list(map(lambda s: float(s), scores[0]))
