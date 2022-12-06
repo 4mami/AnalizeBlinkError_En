@@ -55,41 +55,20 @@ class Program:
 
         logger.info(f"{self.TEST_DATA_KORE50}を1行ずつ読み込む（1560行） 現在id:{self.id}")
         with open(self.DATASET_DIR + self.TEST_DATA_KORE50, encoding="ISO-8859-1") as test_data_file:
-            input_blink: bool = True
-            sentence: str = ""
-            mention: str = ""
-            url: str = ""
+            sentence_list = list()
+            mention_list = list()
+            url_list = list()
             for line in tqdm.tqdm(test_data_file):
                 if (re.match(r"\A\tnif:isString ", line)): # 	nif:isString "David and Victoria named their children Brooklyn, Romeo, Cruz, and Harper Seven."^^xsd:string .
-                    input_blink = True
-                    tmp_list = line.split('"')
-                    if (len(tmp_list) != 3):
-                        logger.error(f"{self.TEST_DATA_KORE50}に不正な行: {line}")
-                        input_blink = False
-                    sentence = tmp_list[1]
+                    sentence_list = line.split('"')
                 elif (re.match(r"\A\tnif:anchorOf ", line)): # 	nif:anchorOf "David"^^xsd:string ;
-                    tmp_list = line.split('"')
-                    if (len(tmp_list) != 3):
-                        logger.error(f"{self.TEST_DATA_KORE50}に不正な行: {line}")
-                        input_blink = False
-                    mention = tmp_list[1]
+                    mention_list = line.split('"')
                 elif (re.match(r"\A\titsrdf:taIdentRef  ", line)): # 	itsrdf:taIdentRef  <http://dbpedia.org/resource/David_Beckham> .
-                    tmp_list = re.split(r"<|>", line)
-                    url = tmp_list[1]
-                    tmp_gold = url.split("/")[-1].replace("_", " ")
-                    tmp_context = sentence.split(mention)
-                    if (len(tmp_list) != 3 or len(tmp_context) != 2):
+                    url_list = re.split(r"<|>", line)
+                    if (len(sentence_list) != 3 or len(mention_list) != 3 or len(url_list) != 3 or len(sentence_list[1].split(mention_list[1])) != 2):
                         logger.error(f"{self.TEST_DATA_KORE50}に不正な行: {line}")
-                        input_blink = False
-
-                    if (input_blink):
-                        test_data = dict()
-                        test_data["word"] = mention
-                        test_data["left_context_text"] = tmp_context[0].strip()
-                        test_data["right_context_text"] = tmp_context[1].strip()
-                        test_data["y_title"] = tmp_gold
-                        test_data["dbpediaurl"] = url
-                        data_to_link = [ {"id": id, "label": "unknown", "label_id": -1, "context_left": test_data["left_context_text"].lower(), "mention": test_data["word"].lower(), "context_right": test_data["right_context_text"].lower()} ]
+                        continue
+                    test_data, data_to_link = self.kore50_lines_to_blink_input(self.id, mention_list, sentence_list, url_list)
                         _, _, _, _, _, predictions, scores, = main_dense.run(args, None, *models, test_data=data_to_link)
                         scores_float = list(map(lambda s: float(s), scores[0]))
 
@@ -138,6 +117,22 @@ class Program:
                 "mention": test_data["word"].lower(),
                 "context_right": test_data["right_context_text"].lower(),
             } ]
+
+        return test_data, data_to_link
+
+    def kore50_lines_to_blink_input(self, id: int, mention_list: list, sentence_list: list, url_list: list):
+        mention = mention_list[1]
+        sentence = sentence_list[1]
+        url = url_list[1]
+
+        tmp_context = sentence.split(mention)
+        test_data = dict()
+        test_data["word"] = mention
+        test_data["left_context_text"] = tmp_context[0].strip()
+        test_data["right_context_text"] = tmp_context[1].strip()
+        test_data["y_title"] = url.split("/")[-1].replace("_", " ")
+        test_data["dbpediaurl"] = url # ここを改造して、wikiurlを作る
+        data_to_link = [ {"id": id, "label": "unknown", "label_id": -1, "context_left": test_data["left_context_text"].lower(), "mention": test_data["word"].lower(), "context_right": test_data["right_context_text"].lower()} ]
 
         return test_data, data_to_link
 
