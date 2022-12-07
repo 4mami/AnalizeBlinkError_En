@@ -96,7 +96,7 @@ class Program:
                             logger.error(f"{self.TEST_DATA_YAHOO}に不正な行: {session.get('id')}, {tmp_mention}")
                             continue
                         tmp_wikiurl = txt_and_anno[1].text
-                        test_data, data_to_link = self.yahoo_annotation_node_to_blink_input(self.id, tmp_mention, tmp_context, tmp_wikiurl)
+                        test_data, data_to_link = self.yahoo_annotation_node_to_blink_input(self.id, tmp_mention, tmp_context, tmp_wikiurl, session.get('id'))
                         _, _, _, _, _, predictions, scores, = main_dense.run(args, None, *models, test_data=data_to_link)
                         scores_float = list(map(lambda s: float(s), scores[0]))
 
@@ -137,8 +137,9 @@ class Program:
 
         return test_data, data_to_link
 
-    def yahoo_annotation_node_to_blink_input(self, id: int, mention: str, context: list, url :str):
+    def yahoo_annotation_node_to_blink_input(self, id: int, mention: str, context: list, url :str, session_id: str):
         test_data = dict()
+        test_data["sessionId"] = session_id
         test_data["word"] = mention
         test_data["left_context_text"] = context[0].strip()
         test_data["right_context_text"] = context[1].strip()
