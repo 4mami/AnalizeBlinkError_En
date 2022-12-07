@@ -92,7 +92,7 @@ class Program:
                     elif (txt_and_anno.tag == "annotation"):
                         tmp_mention = txt_and_anno[0].text
                         tmp_context = sentence_yahoo.split(tmp_mention)
-                        if (len(tmp_context) != 2):
+                        if (len(txt_and_anno) < 2 or len(tmp_context) != 2):
                             logger.error(f"{self.TEST_DATA_YAHOO}に不正な行: {session.get('id')}, {tmp_mention}")
                             continue
                         tmp_wikiurl = txt_and_anno[1].text
